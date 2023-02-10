@@ -13,6 +13,10 @@ import com.example.omdbapp.databinding.ActivityMainBinding
 import com.example.omdbapp.repository.model.Movie
 import com.example.omdbapp.repository.model.MovieList
 import com.example.omdbapp.viewModel.AppViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -34,19 +38,21 @@ class MainActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this)[AppViewModel::class.java]
 
         binding.btnSearch.setOnClickListener {
-            if (binding.tvSearch.editText?.text.toString().isNotEmpty()) {
-                viewModel.getMovie(binding.tvSearch.editText?.text.toString(), PAGE)
-                    .observe(this, Observer {
-                        movieCurrentList.clear()
-                        PAGE = 1
-                        totalCount = it.totalResult.toInt()
-                        if (it.response == "True") movieCurrentList.addAll(it.search)
-                        val myAdapter = MyRecyclerViewAdapter(movieCurrentList, this)
-                        binding.recyclerView.adapter = myAdapter
-                        myAdapter.notifyDataSetChanged()
-                    })
-            }else{
-                Toast.makeText(this@MainActivity, "Enter search keywords...", Toast.LENGTH_SHORT).show()
+            CoroutineScope(Dispatchers.Main).launch {
+                if (binding.tvSearch.editText?.text.toString().isNotEmpty()) {
+                    viewModel.getMovie(binding.tvSearch.editText?.text.toString(), PAGE)
+                        .observe(this@MainActivity, Observer {
+                            movieCurrentList.clear()
+                            PAGE = 1
+                            totalCount = it.totalResult.toInt()
+                            if (it.response == "True") movieCurrentList.addAll(it.search)
+                            val myAdapter = MyRecyclerViewAdapter(movieCurrentList, this@MainActivity)
+                            binding.recyclerView.adapter = myAdapter
+                            myAdapter.notifyDataSetChanged()
+                        })
+                }else{
+                    Toast.makeText(this@MainActivity, "Enter search keywords...", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
@@ -56,12 +62,14 @@ class MainActivity : AppCompatActivity() {
                         if (!binding.recyclerView.canScrollVertically(1)){
                             if (movieCurrentList.size <= totalCount){
                                 PAGE++
-                                viewModel.getMovie(binding.tvSearch.editText?.text.toString(), PAGE).observe(this@MainActivity, Observer {
-                                    if (it.response == "True") movieCurrentList.addAll(it.search)
-                                    val myAdapter = MyRecyclerViewAdapter(movieCurrentList, this@MainActivity)
-                                    binding.recyclerView.adapter = myAdapter
-                                    myAdapter.notifyDataSetChanged()
-                                })
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    viewModel.getMovie(binding.tvSearch.editText?.text.toString(), PAGE).observe(this@MainActivity, Observer {
+                                        if (it.response == "True") movieCurrentList.addAll(it.search)
+                                        val myAdapter = MyRecyclerViewAdapter(movieCurrentList, this@MainActivity)
+                                        binding.recyclerView.adapter = myAdapter
+                                        myAdapter.notifyDataSetChanged()
+                                    })
+                                }
                             }
                         }
                 }

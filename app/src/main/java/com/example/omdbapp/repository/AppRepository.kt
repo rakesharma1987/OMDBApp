@@ -13,20 +13,11 @@ import retrofit2.Response
 class AppRepository {
     val movieList = MutableLiveData<MovieList>()
 
-    fun getMovieApiCall(search: String, page: Int) : LiveData<MovieList> {
+    suspend fun getMovieApiCall(search: String, page: Int) : LiveData<MovieList> {
         val call = RetrofitBuilder.apiService.getMovie("b9bd48a6", search, "movie", page)
-        call.enqueue(object : Callback<MovieList> {
-            override fun onResponse(call: Call<MovieList>, response: Response<MovieList>) {
-                if (response.isSuccessful){
-                    val movieData = response.body()
-                    movieList.postValue(movieData)
-                }
-            }
-
-            override fun onFailure(call: Call<MovieList>, t: Throwable) {
-                Log.d("MOVIES", t.message.toString())
-            }
-        })
+        if (call != null) {
+            movieList.postValue(call)
+        }
         return movieList
     }
 }

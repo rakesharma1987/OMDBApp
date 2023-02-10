@@ -9,7 +9,7 @@ import com.example.omdbapp.repository.model.MovieList
 
 class AppViewModel: ViewModel() {
 
-    fun getMovie(search: String, page: Int) : LiveData<MovieList> {
+    suspend fun getMovie(search: String, page: Int) : LiveData<MovieList> {
         val servicesLiveData = AppRepository().getMovieApiCall(search, page)
         return servicesLiveData!!
     }
